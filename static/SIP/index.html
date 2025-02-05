@@ -1,0 +1,518 @@
+<!doctype html>
+<html>
+    <head>
+        <!-- <link rel="stylesheet" type="text/css" href="style.css"> -->
+        <style>
+            #basic, .sip, .lumsum, #floatingwindow, button {
+                border-radius: 45px !important;
+                box-shadow: 2px 2px 4px 2px rgba(0, 0, 112, 0.3) !important;
+            }
+            :root {
+                font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+                line-height: 1.6;
+                font-weight: 400;
+                color: #2c3e50;
+                background-color: #ecf0f1;
+            }
+            
+            body {
+                margin: 0;
+                padding: 1rem;
+                min-width: 320px;
+                min-height: 100vh;
+                background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            }
+            
+            #basic {
+                max-width: 800px;
+                /* margin: 0 auto; */
+                background: white;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                /* width: 150px; */
+                display: inline-grid;
+            }
+            
+            .sip, .lumsum {
+                background: #ffffff;
+                padding: 1rem;
+                margin: 0.5rem 0;
+                border-radius: 8px;
+                border: 1px solid #dfe6e9;
+                position: relative;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                max-width: 350px;
+                height: 320px;
+                display: inline-grid;
+            }
+            
+            label {
+                display: block;
+                width: auto;
+                margin: 0.25rem 0;
+                font-weight: 500;
+                color: #34495e;
+            }
+            
+            input[type="text"] {
+                display: inline-block;
+                width: 100px;
+                padding: 0.25rem;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                margin-right: 0.5rem;
+                font-size: 0.9rem;
+                transition: border-color 0.3s;
+            }
+            
+            input[type="text"]:focus {
+                border-color: #3498db;
+                outline: none;
+            }
+            
+            input[type="range"] {
+                display: block;
+                width: 150px;
+                margin: 0 0.5rem;
+                /* vertical-align: middle; */
+                transition: background-color 0.3s;
+                width: 300px;
+            }
+            
+            #basic input[type="range"] {
+                width: 200px;
+            }
+            input[type="range"]:focus {
+                background-color: #3498db;
+            }
+            
+            button {
+                background: #0275ff;
+                color: white;
+                border: none;
+                padding: 0.4rem 0.8rem;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                margin: 0.25rem;
+                transition: background-color 0.3s, transform 0.2s;
+                width: 100px;
+                height: 50px;
+            }
+            
+            button:hover {
+                background: #2c8afa;
+                transform: translateY(3px);
+            }
+            
+            button.rmv {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background: #0275ff;
+                padding: 0.2rem 0.4rem;
+                font-size: 0.8rem;
+                width: auto;
+                height: auto;
+            }
+            
+            button.rmv:hover {
+                background: #c0392b;
+            }
+            
+            .result {
+                margin: 0.5rem 0 0 0;
+                padding: 0.4rem;
+                background: #f1f5f9;
+                border-radius: 4px;
+                font-weight: 500;
+                color: #2c3e50;
+            }
+            
+            .sticky-container {
+                position: sticky;
+                top: 0;
+                background: white;
+                margin: -1rem -1rem 0;
+                padding: 0.5rem 1rem;
+                border-radius: 12px 12px 0 0;
+                border-bottom: 1px solid #dfe6e9;
+                z-index: 100;
+            }
+            
+            #floatingwindow {
+                display: inline-flex;
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                /* background-color: #dae6f9; */
+                width: auto;
+                backdrop-filter: blur(3px);
+                justify-content: center;
+                align-items: center;
+            }
+            
+            #final_result, #inflation_adjusted_result {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #2c3e50;
+                padding: 0.5rem;
+                /* background: #e0f2fe; */
+                border-radius: 6px;
+                text-align: center;
+                width: 100%;
+                box-sizing: border-box;
+                margin: 0;
+                position: sticky;
+                top: 0;
+                z-index: 101;
+            }
+            
+            .button-group {
+                display: flex;
+                gap: 0.25rem;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 370px) {
+                body {
+                    padding: 0.5rem;
+                }
+            
+                #basic {
+                    padding: 0.5rem;
+                }
+            
+                .sticky-container {
+                    margin: -0.5rem -0.5rem 0;
+                    padding: 0.5rem;
+                }
+            
+                input[type="range"] {
+                    width: 200px;
+                }
+            
+                label {
+                    width: 100px;
+                }
+            }
+        </style>
+    </head>
+    <script>
+
+        function parseInput(input) {
+            let value = input.value;
+
+            // Remove all non-numeric characters except for the comma and dot
+            value = value.replace(/[^0-9.]/g, "");
+
+            // Remove leading zeros
+            value = value.replace(/^0+/, "");
+
+            // If the value is empty (i.e., just zeros), set it to '0'
+            if (value === "") value = 0;
+            else value = parseFloat(value);
+
+            // Format the value using the Indian numbering system
+            // input.value = formatIndianNumber(value);
+            // input.value = toIndianNum(value);
+
+            return value
+        }
+        function toIndianNum(value){
+            return parseFloat(value).toLocaleString("en-IN");
+        }
+        function remove_investment(ele) {
+            ele.remove();
+            investments.delete(ele);
+            updateFinalResult();
+        }
+        function syncInputWithSlider(input, slider) {
+            input.value = slider.value;
+            input.oninput(input);
+        }
+        function syncSliderWithInput(slider, input) {
+            slider.value = parseInput(input);
+        }
+
+        function updateFinalResult() {
+            let totalValue = 0;
+            investments.forEach(investment => {
+                totalValue += parseFloat(investment._value);
+            });
+            document.getElementById("final_result").textContent = toIndianNum(totalValue.toFixed(2));
+            
+            let inflationRate = parseFloat(inflation._value);
+            let totalMonths = parseInt(year._value) * 12 + parseInt(month._value);
+            let inflationMult = Math.pow(1 + inflationRate / 100, totalMonths / 12);
+            let inflationAdjusted = totalValue / inflationMult;
+            document.getElementById("inflation_adjusted_result").textContent = toIndianNum(inflationAdjusted.toFixed(2));
+            document.getElementById("inflation_adjusted_result").textContent = toIndianNum(inflationAdjusted.toFixed(2));
+        }
+
+        function calculateSIPWithIncrease(
+            principal,
+            annualRate,
+            months,
+            increasePercentage,
+        ) {
+            let futureValue = 0;
+            let currentPrincipal = principal;
+            let month = 1;
+
+            // Convert annual interest rate to monthly rate
+            // let monthlyRate = annualRate / 100 / 12;
+            let monthlyRate = Math.pow((1 + annualRate/100), (1/12)) - 1;
+
+            while (month <= months) {
+                // Number of months in the current year
+                const monthsInCurrentYear = Math.min(12, months - month + 1);
+
+                // Calculate the SIP value for this set of months (until the year ends)
+                for (let i = 0; i < monthsInCurrentYear; i++) {
+                    // Apply the SIP formula for each monthly investment
+                    futureValue +=
+                        currentPrincipal *
+                        Math.pow(1 + monthlyRate, months - month + i + 1);
+                }
+
+                // After each year, increase the SIP by the specified percentage
+                currentPrincipal =
+                    currentPrincipal * (1 + increasePercentage / 100);
+
+                // Move to the next year
+                month += monthsInCurrentYear;
+            }
+            debugger;
+            return futureValue.toFixed(2); // Return the result rounded to 2 decimal places
+        }
+        function calculateLumpsum(P, r, months) {
+            let monthlyRate = Math.pow((1 + r/100), (1/12)) - 1;
+            let A = P * Math.pow(1 + monthlyRate, months);
+            return A;
+        }
+    </script>
+    <template id="sip_templ">
+        <div class="sip">
+            SIP
+            <button class="rmv" onclick="remove_investment(this.parentElement)">
+                x
+            </button>
+            <br />
+            <label> Monthly Investment </label>
+            <input type="text" name="monthly_investment"/>
+            <input type="range" min="0" max="1000000" step="1000" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            <label> Returns rate </label>
+            <input type="text" name="intrest"/>
+            <input type="range" min="0" max="30" step="0.1" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            <label> Yearly raise </label>
+            <input type="text" name="increase" />
+            <input type="range" min="0" max="100" step="0.1" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            <p class="result"></p>
+        </div>
+    </template>
+    <template id="lumsum_templ">
+        <div class="lumsum">
+            Lumsum
+            <button class="rmv" onclick="remove_investment(this.parentElement)">
+                x
+            </button>
+            <br />
+            <label>Priniciple</label>
+            <input type="text" class="priniciple" oninput="syncSliderWithInput(this.nextElementSibling, this)" />
+            <input type="range" min="0" max="1000000" step="1000" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            <label>Returns rate</label>
+            <input type="text" class="intrest" oninput="syncSliderWithInput(this.nextElementSibling, this)" />
+            <input type="range" min="0" max="100" step="0.1" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            <p class="result"></p>
+        </div>
+    </template>
+    <body>        
+        <div id="basic">
+            <div>
+                <label for="inflation">Inflation</label>
+                <input type="text" id="inflation"  />
+                <input type="range" min="0" max="15" step="0.5" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+                <label for="year">Year</label>
+                <input type="text" id="year" oninput="syncSliderWithInput(this.nextElementSibling, this)" />
+                <input type="range" min="0" max="30" step="1" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+                <label for="month">Month</label>
+                <input type="text" id="month" oninput="syncSliderWithInput(this.nextElementSibling, this)" />
+                <input type="range" min="0" max="12" step="1" oninput="syncInputWithSlider(this.previousElementSibling, this)" />
+            </div>
+        </div>
+        <div id="floatingwindow">
+            <script>
+
+            </script>
+            <button onclick="add_investment('sip')">+ SIP</butt/on>
+            <button onclick="add_investment('lumsum')">+ Lumsum</button>
+            <button onclick="clear_all()">X Clear</button>
+            <div>
+                Final Result:
+                <p id="final_result"></p>
+                <div>
+                    Inflation Adjusted:
+                    <p id="inflation_adjusted_result"></p>
+                </div>
+            </div>
+        </div>
+        <br>
+    </body>
+    <script>
+        function add_investment(inv_type) {
+            let investmentElement = null;
+            if(inv_type === "sip"){ 
+                investmentElement = add_sip(); 
+                debugger;
+            }else{
+                investmentElement = add_lum();
+            }
+            investments.add(investmentElement);
+            // investmentElement.final_value();
+            updateFinalResult();
+        }
+        function update(investmentElement, input, slider) {
+            return function() {
+                syncSliderWithInput(slider, input);
+                input._value = parseInput(input)
+                input.value = toIndianNum(input._value); 
+                if (typeof investmentElement[Symbol.iterator] === 'function')    
+                    investmentElement.forEach(element => element.final_value());
+                else investmentElement.final_value();
+                updateFinalResult();
+            }
+        }
+        function add_sip(){
+            let investmentElement = document.getElementById("sip_templ").content.cloneNode(true);
+            document.body.appendChild(investmentElement);
+            investmentElement = document.body.lastElementChild;
+            let mon_inv = investmentElement.querySelector("input[name=monthly_investment]");
+            let intr = investmentElement.querySelector("input[name=intrest]");
+            
+            let inc = investmentElement.querySelector("input[name=increase]");
+
+
+            mon_inv.value = toIndianNum(app.default.sip.monthly_investment);
+            intr.value = app.default.sip.intrest;
+            inc.value = app.default.sip.increase;
+
+            mon_inv._value = app.default.sip.monthly_investment;
+            intr._value = app.default.sip.intrest;
+            inc._value = app.default.sip.increase;  
+
+            mon_inv.oninput = update(investmentElement, mon_inv, mon_inv.nextElementSibling);
+            intr.oninput = update(investmentElement, intr, intr.nextElementSibling);
+            inc.oninput = update(investmentElement, inc, inc.nextElementSibling);
+
+
+            let result = investmentElement.querySelector(".result");
+            
+            investmentElement.final_value = function() {
+                // get value to calculate and call sip function
+                let monthlyInvestment = parseFloat(mon_inv._value);
+                let interestRate = parseFloat(intr._value);
+                let increaseRate = parseFloat(inc._value);
+                let totalMonths = parseInt(year._value) * 12 + parseInt(month._value);
+                let inflationRate = parseFloat(inflation._value);
+
+                let _finalValue = calculateSIPWithIncrease(monthlyInvestment, interestRate, totalMonths, increaseRate);
+                investmentElement._value = _finalValue;
+                result.textContent = toIndianNum(_finalValue);
+                return _finalValue;
+            }
+            // investmentElement.finalValue(this);
+
+            mon_inv.oninput(this);
+            intr.oninput(this);
+            inc.oninput(this);
+
+            return investmentElement;
+        }
+        function add_lum(){
+            let investmentElement = document.getElementById("lumsum_templ").content.cloneNode(true);
+            document.body.appendChild(investmentElement);
+            investmentElement = document.body.lastElementChild;
+
+            let principle = investmentElement.querySelector("input[class=priniciple]");
+            let interest = investmentElement.querySelector("input[class=intrest]");
+
+            principle.value = toIndianNum(app.default.lum.principle);
+            interest.value = toIndianNum(app.default.lum.intrest);
+
+            principle._value = app.default.lum.principle; 
+            interest._value = app.default.lum.intrest;
+
+
+            let result = investmentElement.querySelector(".result");
+
+            investmentElement.final_value = function() {
+                let principalAmount = parseFloat(principle._value);
+                let interestRate = parseFloat(interest._value);
+                let totalMonths = parseInt(year._value) * 12 + parseInt(month.value);
+
+                let finalValue = calculateLumpsum(principalAmount, interestRate, totalMonths);
+                investmentElement._value = finalValue;
+                result.textContent = toIndianNum(finalValue.toFixed(2));
+                return finalValue;
+            }
+            principle.oninput = update(investmentElement, principle, principle.nextElementSibling);
+            interest.oninput = update(investmentElement, interest, interest.nextElementSibling);
+
+            // Call oninput to update scrollbar values
+            principle.oninput();
+            interest.oninput();
+
+            return investmentElement;
+        }
+        function clear_all() {
+            while (investments.size > 0) {
+                let investment = investments.values().next().value;
+                investment.remove();
+                investments.delete(investment);
+            }
+            updateFinalResult();
+        }
+        let investments = new Set();
+        let _default = {
+                inflation: 6,
+                year: 3,
+                month: 0,
+                sip: {
+                    monthly_investment: 10000,
+                    intrest: 7,
+                    increase: 6,
+                },
+                lum:{
+                    principle: 100000,
+                    intrest: 7,
+                }
+            }
+        let app = {
+            default: _default,
+            inflation: _default.inflation,
+            year: _default.year,
+            month: _default.month,
+            investments: investments,
+        };
+        let month = document.getElementById("month");
+        month.value = app.default.month;
+        let year = document.getElementById("year");
+        year.value = app.default.year;
+        let inflation = document.getElementById("inflation");
+        inflation.value = app.default.inflation;
+        month.oninput = update(investments, month, month.nextElementSibling);
+        year.oninput = update(investments, year, year.nextElementSibling);
+        inflation.oninput = update(investments, inflation, inflation.nextElementSibling);
+        month.oninput();
+        year.oninput();
+        inflation.oninput();
+    </script>
+</html>
